@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14532d">
+<title>EMI Calculator</title>
+<style>
+:root{--bg:#f3f7f2;--surface:#fff;--ink:#14231a;--muted:#5b6b60;--line:#d9e3da;--accent:#14532d;--accent2:#e0a526;--interest:#c2410c;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a12;--surface:#162419;--ink:#e8f1ea;--muted:#9bb0a0;--line:#26382b;--accent:#4ade80;--accent2:#f0b73a;--interest:#fb923c}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI","Nirmala UI",Roboto,Arial,"Noto Sans",system-ui,sans-serif;line-height:1.45}
+input,button{font-family:inherit}
+main{max-width:480px;margin:0 auto;padding:16px}
+h1{font-size:1.25rem;margin:4px 0 14px;font-weight:700}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.field{margin-bottom:16px}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+label{font-size:.9rem;color:var(--muted)}
+input[type=number]{width:140px;text-align:right;font-size:1rem;font-weight:600;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--muted);padding:5px 12px;font-size:.85rem;cursor:pointer}
+.seg button.on{background:var(--accent);color:var(--bg)}
+.emi{text-align:center;padding:20px 12px;background:var(--accent);color:var(--bg);border-radius:14px;margin-bottom:14px}
+.emi small{opacity:.85;font-size:.85rem}
+.emi strong{display:block;font-size:2.2rem;margin-top:2px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stats div{background:var(--bg);border-radius:10px;padding:10px}
+.stats span{display:block;font-size:.78rem;color:var(--muted)}
+.stats b{font-size:1.05rem}
+.bar{height:12px;border-radius:6px;overflow:hidden;display:flex;background:var(--line)}
+.bar i{display:block;height:100%}
+.legend{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:6px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+button.ghost{width:100%;padding:11px;border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer}
+.tablewrap{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:.82rem;min-width:360px}
+th,td{padding:7px 6px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--surface)}
+:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+</style>
+</head>
+<body>
+<main>
+<h1>EMI Calculator</h1>
+
+<div class="card">
+  <div class="field">
+    <div class="row"><label for="pn">Loan amount (₹)</label><input id="pn" type="number" inputmode="numeric" min="0"></div>
+    <input id="pr" type="range" min="10000" max="10000000" step="10000" aria-label="Loan amount">
+  </div>
+  <div class="field">
+    <div class="row"><label for="rn">Interest rate (% per year)</label><input id="rn" type="number" inputmode="decimal" step="0.05" min="0"></div>
+    <input id="rr" type="range" min="1" max="30" step="0.05" aria-label="Interest rate">
+  </div>
+  <div class="field" style="margin-bottom:0">
+    <div class="row">
+      <label for="tn">Tenure</label>
+      <div class="row" style="gap:8px">
+        <input id="tn" type="number" inputmode="numeric" min="1" style="width:80px">
+        <div class="seg"><button id="uy" class="on" type="button">Years</button><button id="um" type="button">Months</button></div>
+      </div>
+    </div>
+    <input id="tr" type="range" min="1" max="30" step="1" aria-label="Tenure">
+  </div>
+</div>
+
+<div class="emi"><small>Monthly EMI</small><strong id="emi">₹0</strong></div>
+
+<div class="card">
+  <div class="stats">
+    <div><span>Principal</span><b id="sp">₹0</b></div>
+    <div><span>Total interest</span><b id="si">₹0</b></div>
+    <div><span>Total payment</span><b id="st">₹0</b></div>
+    <div><span>Months</span><b id="sm">0</b></div>
+  </div>
+  <div class="bar"><i id="b1" style="background:var(--accent)"></i><i id="b2" style="background:var(--interest)"></i></div>
+  <div class="legend"><span><span class="dot" style="background:var(--accent)"></span>Principal <b id="lp"></b></span><span><span class="dot" style="background:var(--interest)"></span>Interest <b id="li"></b></span></div>
+</div>
+
+<div class="card">
+  <button class="ghost" id="tg" type="button">Show month-by-month schedule</button>
+  <div class="tablewrap" id="tw" hidden>
+    <table><thead><tr><th>Month</th><th>Principal</th><th>Interest</th><th>Balance</th></tr></thead><tbody id="tb"></tbody></table>
+  </div>
+</div>
+</main>
+
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var inr=new Intl.NumberFormat('en-IN',{maximumFractionDigits:0});
+  var f=function(n){return '₹'+inr.format(Math.round(n))};
+  var years=true;
+  var P=$('pn'),PR=$('pr'),R=$('rn'),RR=$('rr'),T=$('tn'),TR=$('tr');
+  P.value=1000000;R.value=9;T.value=5;
+
+  function months(){var t=parseFloat(T.value)||0;return Math.round(years?t*12:t)}
+  function calc(){
+    var p=parseFloat(P.value)||0,r=(parseFloat(R.value)||0)/1200,n=months();
+    var emi=0;
+    if(p>0&&n>0){emi=r===0?p/n:p*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1)}
+    var total=emi*n,intr=total-p;
+    $('emi').textContent=f(emi);$('sp').textContent=f(p);$('si').textContent=f(Math.max(intr,0));
+    $('st').textContent=f(total);$('sm').textContent=n;
+    var pp=total>0?p/total*100:0;
+    $('b1').style.width=pp+'%';$('b2').style.width=(total>0?100-pp:0)+'%';
+    $('lp').textContent=pp.toFixed(0)+'%';$('li').textContent=(total>0?100-pp:0).toFixed(0)+'%';
+    if(!$('tw').hidden)schedule(p,r,n,emi);
+  }
+  function schedule(p,r,n,emi){
+    var bal=p,h='';
+    for(var m=1;m<=n&&m<=600;m++){
+      var i=bal*r,pr=emi-i;bal=Math.max(bal-pr,0);
+      h+='<tr><td>'+m+'</td><td>'+inr.format(Math.round(pr))+'</td><td>'+inr.format(Math.round(i))+'</td><td>'+inr.format(Math.round(bal))+'</td></tr>';
+    }
+    $('tb').innerHTML=h;
+  }
+  function syncRanges(){
+    PR.value=P.value;RR.value=R.value;
+    TR.max=years?30:360;TR.value=T.value;
+  }
+  PR.oninput=function(){P.value=PR.value;calc()};
+  RR.oninput=function(){R.value=RR.value;calc()};
+  TR.oninput=function(){T.value=TR.value;calc()};
+  [P,R,T].forEach(function(e){e.oninput=function(){syncRanges();calc()}});
+  function setUnit(y){
+    if(y===years)return;
+    var m=months();years=y;
+    T.value=y?Math.max(1,Math.round(m/12)):m;
+    $('uy').classList.toggle('on',y);$('um').classList.toggle('on',!y);
+    syncRanges();calc();
+  }
+  $('uy').onclick=function(){setUnit(true)};
+  $('um').onclick=function(){setUnit(false)};
+  $('tg').onclick=function(){
+    var tw=$('tw');tw.hidden=!tw.hidden;
+    $('tg').textContent=tw.hidden?'Show month-by-month schedule':'Hide schedule';
+    if(!tw.hidden)calc();
+  };
+  syncRanges();calc();
+})();
+</script>
+</body>
+</html>
